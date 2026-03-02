@@ -1,0 +1,169 @@
+@model Bug_Tracking_System.Models.Bug
+
+@{
+    ViewData["Title"] = $"Bug #{Model.Id}";
+    var comments = ViewBag.Comments as List<Bug_Tracking_System.Models.Comment>;
+}
+
+<div class="mb-4">
+    <a asp-action="Index" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-1"></i>Back to Bugs
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <!-- Bug Details Card -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <div>
+                    <span class="badge bg-light text-dark me-2">#@Model.Id</span>
+                    <span class="badge @GetStatusBadgeClass(Model.Status)">@Model.Status</span>
+                    <span class="badge @GetPriorityBadgeClass(Model.Priority) ms-1">@Model.Priority</span>
+                </div>
+                <div>
+                    <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-pencil me-1"></i>Edit
+                    </a>
+                    <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-outline-danger btn-sm">
+                        <i class="bi bi-trash me-1"></i>Delete
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                <h4 class="card-title">@Model.Title</h4>
+                <hr />
+                <div class="bug-description">
+                    @if (string.IsNullOrEmpty(Model.Description))
+                    {
+                        <p class="text-muted fst-italic">No description provided.</p>
+                    }
+                    else
+                    {
+                        <p style="white-space: pre-wrap;">@Model.Description</p>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Comments Section -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-chat-dots me-2"></i>Comments (@(comments?.Count ?? 0))</h5>
+            </div>
+            <div class="card-body">
+                @if (comments == null || !comments.Any())
+                {
+                    <p class="text-muted text-center py-3">No comments yet. Be the first to comment!</p>
+                }
+                else
+                {
+                    <div class="comments-list">
+                        @foreach (var comment in comments)
+                        {
+                            <div class="comment-item mb-3 p-3 bg-light rounded">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <strong>
+                                        <i class="bi bi-person-circle me-1"></i>
+                                        @(comment.User?.FullName ?? "Unknown User")
+                                    </strong>
+                                    <small class="text-muted">@comment.CreatedAt.ToString("MMM dd, yyyy HH:mm")</small>
+                                </div>
+                                <p class="mb-0">@comment.Content</p>
+                            </div>
+                        }
+                    </div>
+                }
+
+                <hr />
+                
+                <form asp-action="AddComment" method="post">
+                    <input type="hidden" name="bugId" value="@Model.Id" />
+                    <div class="mb-3">
+                        <label class="form-label">Add Comment</label>
+                        <textarea name="content" class="form-control" rows="3" placeholder="Write your comment here..." required></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Comment as</label>
+                            <select name="userId" class="form-select" asp-items="@ViewBag.Users" required>
+                                <option value="">-- Select User --</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 d-flex align-items-end mb-3">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-send me-1"></i>Post Comment
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <!-- Bug Info Sidebar -->
+        <div class="card">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>Details</h5>
+            </div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-5">Project</dt>
+                    <dd class="col-sm-7">
+                        <a asp-controller="Projects" asp-action="Details" asp-route-id="@Model.ProjectId">
+                            @Model.Project?.Name
+                        </a>
+                    </dd>
+
+                    <dt class="col-sm-5">Status</dt>
+                    <dd class="col-sm-7">
+                        <span class="badge @GetStatusBadgeClass(Model.Status)">@Model.Status</span>
+                    </dd>
+
+                    <dt class="col-sm-5">Priority</dt>
+                    <dd class="col-sm-7">
+                        <span class="badge @GetPriorityBadgeClass(Model.Priority)">@Model.Priority</span>
+                    </dd>
+
+                    <dt class="col-sm-5">Assigned To</dt>
+                    <dd class="col-sm-7">
+                        @if (Model.AssignedTo != null)
+                        {
+                            <a asp-controller="Users" asp-action="Details" asp-route-id="@Model.AssignedToId">
+                                @Model.AssignedTo.FullName
+                            </a>
+                        }
+                        else
+                        {
+                            <span class="text-muted">Unassigned</span>
+                        }
+                    </dd>
+
+                    <dt class="col-sm-5">Created</dt>
+                    <dd class="col-sm-7">@Model.CreatedAt.ToString("MMM dd, yyyy")</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+</div>
+
+@functions {
+    string GetStatusBadgeClass(string? status) => status switch
+    {
+        "Open" => "bg-warning text-dark",
+        "In Progress" => "bg-info",
+        "Resolved" => "bg-success",
+        "Closed" => "bg-secondary",
+        _ => "bg-light text-dark"
+    };
+
+    string GetPriorityBadgeClass(string? priority) => priority switch
+    {
+        "Critical" => "bg-danger",
+        "High" => "bg-orange",
+        "Medium" => "bg-warning text-dark",
+        "Low" => "bg-success",
+        _ => "bg-light text-dark"
+    };
+}

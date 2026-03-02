@@ -1,0 +1,288 @@
+﻿@model Bug_Tracking_System.Models.ViewModels.DashboardViewModel
+
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="bi bi-speedometer2 me-2"></i>Dashboard</h1>
+    <a asp-controller="Bugs" asp-action="Create" class="btn btn-primary">
+        <i class="bi bi-plus-lg me-1"></i>Report Bug
+    </a>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="stat-card bg-primary text-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-0">@Model.TotalProjects</h2>
+                    <p class="mb-0">Projects</p>
+                </div>
+                <i class="bi bi-folder2-open display-4 opacity-50"></i>
+            </div>
+            <a asp-controller="Projects" asp-action="Index" class="stretched-link"></a>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="stat-card bg-danger text-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-0">@Model.TotalBugs</h2>
+                    <p class="mb-0">Total Bugs</p>
+                </div>
+                <i class="bi bi-bug display-4 opacity-50"></i>
+            </div>
+            <a asp-controller="Bugs" asp-action="Index" class="stretched-link"></a>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="stat-card bg-warning text-dark">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-0">@Model.OpenBugs</h2>
+                    <p class="mb-0">Open Bugs</p>
+                </div>
+                <i class="bi bi-exclamation-triangle display-4 opacity-50"></i>
+            </div>
+            <a asp-controller="Bugs" asp-action="Index" asp-route-status="Open" class="stretched-link"></a>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="stat-card bg-info text-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-0">@Model.InProgressBugs</h2>
+                    <p class="mb-0">In Progress Bugs</p>
+                </div>
+                <i class="bi bi-hourglass-split display-4 opacity-50"></i>
+            </div>
+            <a asp-controller="Bugs" asp-action="Index" asp-route-status="In Progress" class="stretched-link"></a>
+        </div>
+    </div>
+    <div class="col-md-3 col-sm-6 mb-3">
+        <div class="stat-card bg-success text-white">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h2 class="mb-0">@Model.ClosedBugs</h2>
+                    <p class="mb-0">Resolved</p>
+                </div>
+                <i class="bi bi-check-circle display-4 opacity-50"></i>
+            </div>
+            <a asp-controller="Bugs" asp-action="Index" asp-route-status="Resolved" class="stretched-link"></a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Recent Bugs -->
+    <div class="col-lg-8 mb-4">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-clock-history me-2"></i>Recent Bugs</h5>
+                <a asp-controller="Bugs" asp-action="Index" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div class="card-body">
+                @if (!Model.RecentBugs.Any())
+                {
+                    <div class="text-center py-5">
+                        <i class="bi bi-inbox display-1 text-muted"></i>
+                        <p class="text-muted mt-3">No bugs reported yet.</p>
+                        <a asp-controller="Bugs" asp-action="Create" class="btn btn-primary">
+                            <i class="bi bi-plus-lg me-1"></i>Report First Bug
+                        </a>
+                    </div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Title</th>
+                                    <th>Project</th>
+                                    <th>Status</th>
+                                    <th>Priority</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var bug in Model.RecentBugs)
+                                {
+                                    <tr class="cursor-pointer" onclick="window.location='@Url.Action("Details", "Bugs", new { id = bug.Id })'">
+                                        <td><span class="badge bg-light text-dark">#@bug.Id</span></td>
+                                        <td>@bug.Title</td>
+                                        <td>@bug.Project?.Name</td>
+                                        <td>
+                                            <span class="badge @GetStatusBadgeClass(bug.Status)">@bug.Status</span>
+                                        </td>
+                                        <td>
+                                            <span class="badge @GetPriorityBadgeClass(bug.Priority)">@bug.Priority</span>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- Bug Summary & Projects -->
+    <div class="col-lg-4">
+        <!-- Bug Status Summary -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-pie-chart me-2"></i>Bug Status</h5>
+            </div>
+            <div class="card-body">
+                @if (Model.TotalBugs == 0)
+                {
+                    <p class="text-muted text-center">No data available</p>
+                }
+                else
+                {
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>Open</span>
+                            <span>@Model.OpenBugs</span>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar bg-warning" style="width: @(Model.TotalBugs > 0 ? (Model.OpenBugs * 100 / Model.TotalBugs) : 0)%"></div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>In Progress</span>
+                            <span>@Model.InProgressBugs</span>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar bg-info" style="width: @(Model.TotalBugs > 0 ? (Model.InProgressBugs * 100 / Model.TotalBugs) : 0)%"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="d-flex justify-content-between mb-1">
+                            <span>Resolved/Closed</span>
+                            <span>@Model.ClosedBugs</span>
+                        </div>
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar bg-success" style="width: @(Model.TotalBugs > 0 ? (Model.ClosedBugs * 100 / Model.TotalBugs) : 0)%"></div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Bugs by Priority -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h5 class="mb-0"><i class="bi bi-bar-chart me-2"></i>By Priority</h5>
+            </div>
+            <div class="card-body">
+                @if (!Model.BugsByPriority.Any())
+                {
+                    <p class="text-muted text-center">No data available</p>
+                }
+                else
+                {
+                    <ul class="list-group list-group-flush">
+                        @foreach (var item in Model.BugsByPriority)
+                        {
+                            <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                <span class="badge @GetPriorityBadgeClass(item.Key)">@item.Key</span>
+                                <span class="badge bg-secondary rounded-pill">@item.Value</span>
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+        </div>
+
+        <!-- Team Summary -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0"><i class="bi bi-people me-2"></i>Team</h5>
+                <a asp-controller="Users" asp-action="Index" class="btn btn-sm btn-outline-primary">Manage</a>
+            </div>
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-center">
+                    <div class="text-center">
+                        <h2 class="mb-0 text-primary">@Model.TotalUsers</h2>
+                        <p class="text-muted mb-0">Team Members</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Projects Overview -->
+<div class="card mt-4">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="bi bi-folder2-open me-2"></i>Projects Overview</h5>
+        <a asp-controller="Projects" asp-action="Index" class="btn btn-sm btn-outline-primary">View All</a>
+    </div>
+    <div class="card-body">
+        @if (!Model.Projects.Any())
+        {
+            <div class="text-center py-4">
+                <p class="text-muted">No projects yet.</p>
+                <a asp-controller="Projects" asp-action="Create" class="btn btn-primary">
+                    <i class="bi bi-plus-lg me-1"></i>Create First Project
+                </a>
+            </div>
+        }
+        else
+        {
+            <div class="row">
+                @foreach (var project in Model.Projects.Take(4))
+                {
+                    <div class="col-md-3 col-sm-6 mb-3">
+                        <div class="card h-100 border-0 bg-light">
+                            <div class="card-body">
+                                <h6 class="card-title">
+                                    <a asp-controller="Projects" asp-action="Details" asp-route-id="@project.Id" class="text-decoration-none">
+                                        <i class="bi bi-folder me-1 text-primary"></i>@project.Name
+                                    </a>
+                                </h6>
+                                <div class="d-flex gap-2">
+                                    <span class="badge bg-secondary">
+                                        @(project.Bug?.Count ?? 0) bugs
+                                    </span>
+                                    @if (project.Bug != null && project.Bug.Count(b => b.Status == "Open") > 0)
+                                    {
+                                        <span class="badge bg-warning text-dark">
+                                            @project.Bug.Count(b => b.Status == "Open") open
+                                        </span>
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+@functions {
+    string GetStatusBadgeClass(string? status) => status switch
+    {
+        "Open" => "bg-warning text-dark",
+        "In Progress" => "bg-info",
+        "Resolved" => "bg-success",
+        "Closed" => "bg-secondary",
+        _ => "bg-light text-dark"
+    };
+
+    string GetPriorityBadgeClass(string? priority) => priority switch
+    {
+        "Critical" => "bg-danger",
+        "High" => "bg-orange",
+        "Medium" => "bg-warning text-dark",
+        "Low" => "bg-success",
+        _ => "bg-light text-dark"
+    };
+}
