@@ -1,5 +1,6 @@
 using Bug_Tracking_System.Models;
 using Bug_Tracking_System.Models.ViewModels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -187,6 +188,7 @@ namespace Bug_Tracking_System.Controllers
         }
 
         // GET: Bugs/Delete/5
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int? id)
         {
             if (id == null)
@@ -210,6 +212,7 @@ namespace Bug_Tracking_System.Controllers
         // POST: Bugs/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var bug = await _context.Bug.FindAsync(id);
